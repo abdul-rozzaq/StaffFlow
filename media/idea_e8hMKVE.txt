@@ -1,0 +1,48 @@
+Endpoints
+	employees
+		/api/employees/ [GET, POST]
+		/api/employees/:id/ [PUT, DELETE, RETRIEVE]
+	
+	companies
+		/api/companies/ [GET, POST]
+		/api/companies/:id/ [PUT, DELETE]
+		
+	requests
+		/api/requests/ [GET, POST]
+		/api/requests/:id/ [PUT, DELETE]
+		
+		/api/request-image/ [POST]
+		/api/request-image/ [DELETE]
+	
+Models
+	Employee
+		id
+		image [default image]
+		first_name
+		last_name
+		role
+		phone_number
+		address
+		password
+			
+	Company
+		id
+		name
+		stir
+		address
+		status
+	
+	Request
+		id
+		employee_id
+		company_id
+		priority [1-10]
+		images
+		description
+		long
+		lat
+		file [optional]
+	
+	RequestImage
+		request_id
+		file_path
