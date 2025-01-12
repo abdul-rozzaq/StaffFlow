@@ -5,52 +5,72 @@ from .models import Company, Employee, Request, RequestImage
 
 class EmployeeSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
-    region = serializers.CharField(read_only=True)
-    district = serializers.CharField(read_only=True)
 
     class Meta:
         model = Employee
-        fields = ["id", "image", "first_name", "last_name", "role", "phone_number", "region", "district", "password"]
+        fields = ["id", "image", "first_name", "last_name", "role", "phone_number", "region", "district", "password", "passport"]
+
+    def create(self, validated_data):
+        employee: Employee = super().create(validated_data)
+        employee.set_password(validated_data["password"])
+        employee.save()
+
+        return employee
+
+    def update(self, instance, validated_data):
+        password = validated_data.get("password")
+
+        employee: Employee = super().update(instance, validated_data)
+
+        if password:
+            employee.set_password(password)
+            employee.save()
+
+        return employee
 
 
 class CompanySerializer(serializers.ModelSerializer):
-    region = serializers.CharField(read_only=True)
-    district = serializers.CharField(read_only=True)
-
     class Meta:
         model = Company
-        fields = ["id", "name", "stir", "address", "status", "region", "district"]
+        fields = ["id", "name", "stir", "status", "region", "district", "phone_number"]
 
 
 class RequestSerializer(serializers.ModelSerializer):
-    images = serializers.ListField(child=serializers.ImageField(allow_empty_file=False), write_only=True)
-
+    images = serializers.ListField(child=serializers.ImageField(allow_empty_file=False), write_only=True, required=True)
+    company = serializers.PrimaryKeyRelatedField(queryset=Company.objects.all())
     employee = EmployeeSerializer(read_only=True)
-    company = CompanySerializer(read_only=True)
 
     class Meta:
         model = Request
         fields = ["id", "employee", "company", "priority", "description", "long", "lat", "file", "images", "status"]
 
     def create(self, validated_data):
+        request = self.context["request"]
+        validated_data["employee"] = request.user
+
         images = validated_data.pop("images")
-        request = super().create(validated_data)
+        created_request = super().create(validated_data)
 
         for img in images:
-            RequestImage.objects.create(request=request, image=img)
+            RequestImage.objects.create(request=created_request, image=img)
 
-        return request
+        return created_request
+
+    def update(self, instance, validated_data):
+        images = validated_data.pop("images", [])
+
+        if images:
+            instance.images.all().delete()
+
+            for img in images:
+                RequestImage.objects.create(request=instance, image=img)
+
+        return super().update(instance, validated_data)
 
     def to_representation(self, instance):
-        """
-        JSON formatdagi javobni o'zgartirish uchun.
-        """
         serialized_data = super().to_representation(instance)
-
+        serialized_data["company"] = CompanySerializer(instance.company).data
         serialized_data["images"] = [self.context["request"].build_absolute_uri(img.image.url) for img in instance.images.all()]
-        serialized_data["employee"] = EmployeeSerializer(instance.employee, context=self.context).data
-        serialized_data["company"] = CompanySerializer(instance.company, context=self.context).data
-
         return serialized_data
 
 

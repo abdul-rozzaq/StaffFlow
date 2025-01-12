@@ -7,7 +7,7 @@ from .models import Company, Employee, Request, RequestImage
 from .serializers import CompanySerializer, EmployeeSerializer, RequestSerializer
 
 
-class EmployeeViewSet(viewsets.GenericViewSet, mixins.DestroyModelMixin, mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.CreateModelMixin):
+class EmployeeViewSet(viewsets.ModelViewSet):
     queryset = Employee.objects.all()
     serializer_class = EmployeeSerializer
     permission_classes = [permissions.IsAdminUser]
@@ -21,10 +21,10 @@ class CompanyViewSet(viewsets.ModelViewSet):
     queryset = Company.objects.all()
     serializer_class = CompanySerializer
     permission_classes = [permissions.IsAdminUser]
+    filterset_fields = ["stir"]
 
 
 class RequestsViewSet(viewsets.ModelViewSet):
     queryset = Request.objects.all()
     serializer_class = RequestSerializer
-    filter_backends = [django_filters.rest_framework.DjangoFilterBackend]
     filterset_fields = ["employee"]

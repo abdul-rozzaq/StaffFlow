@@ -42,6 +42,8 @@ class Employee(AbstractBaseUser, PermissionsMixin):
     last_name = models.CharField(max_length=255, blank=True, null=True)
     image = models.ImageField(default="images/default-user.png", upload_to="employee-images", blank=True, null=True)
 
+    passport = models.CharField(max_length=15, null=True, blank=True, default=None)
+
     region = models.CharField(max_length=128)
     district = models.CharField(max_length=128)
 
@@ -68,7 +70,7 @@ class Employee(AbstractBaseUser, PermissionsMixin):
 class Company(models.Model):
     name = models.CharField(max_length=255)
     stir = models.CharField(max_length=64)
-    address = models.TextField()
+    phone_number = models.CharField(max_length=13, null=True, blank=True, default=None)
     status = models.CharField(max_length=16)
 
     region = models.CharField(max_length=128)
@@ -94,11 +96,11 @@ class Request(models.Model):
             ("on_going", "ON_GOING"),
         ),
         max_length=150,
-        default="accepted",
+        default="pending",
     )
 
     def __str__(self):
-        return self.pk
+        return self.employee.full_name()
 
 
 class RequestImage(models.Model):
