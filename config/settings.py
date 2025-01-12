@@ -1,12 +1,17 @@
 from datetime import timedelta
 from pathlib import Path
 
+from environs import Env
+
+env = Env()
+env.read_env()
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
 SECRET_KEY = "django-insecure-c^^#r1_io2bbj+iy=bc5t7*vngl)_^=6nk0)$napacv3x50v9-"
 
-DEBUG = True
+DEBUG = env.bool('DEBUG', default=False)
 
 ALLOWED_HOSTS = ["*"]
 CORS_ALLOW_ALL_ORIGINS = True
