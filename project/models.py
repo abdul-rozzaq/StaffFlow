@@ -1,5 +1,10 @@
+import hashlib
+import uuid
+from datetime import timedelta
+
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.db import models
+from django.utils.timezone import now
 
 
 class EmployeeManager(BaseUserManager):
@@ -106,3 +111,34 @@ class Request(models.Model):
 class RequestImage(models.Model):
     request = models.ForeignKey(Request, on_delete=models.CASCADE, related_name="images")
     image = models.ImageField(upload_to="request-images/")
+
+
+class OTP(models.Model):
+    company = models.OneToOneField(Company, on_delete=models.CASCADE, related_name="otp")
+    code = models.CharField(max_length=6)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def is_expired(self):
+        return now() > self.created_at + timedelta(minutes=5)
+
+    def __str__(self):
+        return f"OTP for {self.company.phone_number}"
+
+
+class CompanyToken(models.Model):
+    company = models.OneToOneField(Company, on_delete=models.CASCADE, related_name="auth_token")
+    key = models.CharField(max_length=40, unique=True)
+    created = models.DateTimeField(auto_now_add=True)
+
+    def save(self, *args, **kwargs):
+        if not self.key:
+            self.key = self.generate_key()
+        return super().save(*args, **kwargs)
+
+    @staticmethod
+    def generate_key():
+        uuid_str = str(uuid.uuid4())
+        return hashlib.sha256(uuid_str.encode()).hexdigest()
+
+    def __str__(self):
+        return f"Token for {self.company.name}"

@@ -8,10 +8,11 @@ class EmployeeSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Employee
-        fields = ["id", "image", "first_name", "last_name", "role", "phone_number", "region", "district", "password", "passport"]
+        fields = ["id", "image", "first_name", "last_name", "role", "phone_number", "region", "district", "password", "passport", "image"]
 
     def create(self, validated_data):
         employee: Employee = super().create(validated_data)
+        employee.is_active = True
         employee.set_password(validated_data["password"])
         employee.save()
 
@@ -78,3 +79,11 @@ class RequestImageSerializer(serializers.ModelSerializer):
     class Meta:
         model = RequestImage
         fields = ["id", "request", "image"]
+
+
+class StirAuthenticationSerializer(serializers.Serializer):
+    stir = serializers.CharField()
+
+class PhoneNumberOTPSerializer(serializers.Serializer):
+    phone_number = serializers.CharField()
+    otp = serializers.IntegerField()

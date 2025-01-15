@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 
-from .models import Company, Employee, Request, RequestImage
+from .models import OTP, Company, Employee, Request, RequestImage
 
 
 @admin.register(Employee)
@@ -45,4 +45,32 @@ class RequestAdmin(admin.ModelAdmin):
     get_images_count.description = "Images Count"
 
 
-admin.site.register(Company)
+@admin.register(Company)
+class CompanyAdmin(admin.ModelAdmin):
+    list_display = ["id", "name", "stir", "phone_number", "status", "region", "district"]
+    list_filter = ["stir", "phone_number"]
+    list_editable = ["phone_number"]
+
+
+@admin.register(OTP)
+class OTPAdmin(admin.ModelAdmin):
+    list_display = ["id", "company", "code", "phone_number", "is_active"]
+    actions = ["clear_expired_otp"]
+
+    def phone_number(self, obj):
+        return obj.company.phone_number
+
+    def is_active(self, obj):
+        return not obj.is_expired()
+
+    phone_number.description = "Phone number"
+    is_active.boolean = True
+
+    @admin.action(description="Clear expired OTPs")
+    def clear_expired_otp(self, request, queryset):
+        expired_items = [obj for obj in queryset if obj.is_expired()]
+
+        for obj in expired_items:
+            obj.delete()
+
+        self.message_user(request, f"{len(expired_items)} expired OTPs have been cleared.")
